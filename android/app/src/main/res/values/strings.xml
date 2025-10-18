@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BinBot</string>
+    <string name="title_activity_main">BinBot</string>
+    <string name="package_name">com.binbot.dashboard</string>
+    <string name="custom_url_scheme">com.binbot.dashboard</string>
+</resources>
