@@ -13,7 +13,7 @@ import {
   Settings
 } from 'lucide-react';
 import { Dashboard } from './Dashboard';
-import { BinManagement } from './BinManagement';
+// import { BinManagement } from './BinManagement';
 import { Scheduling } from './Scheduling';
 import { Alerts } from './Alerts';
 import { History } from './History';
@@ -29,7 +29,7 @@ export function DashboardLayout({ onLogout, theme, onToggleTheme }: DashboardLay
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'bins', label: 'Bin Management', icon: Trash2 },
+    // { id: 'bins', label: 'Bin Management', icon: Trash2 },
     { id: 'scheduling', label: 'Scheduling', icon: Calendar },
     { id: 'alerts', label: 'Alerts', icon: Bell },
     { id: 'history', label: 'History', icon: BarChart3 },
@@ -39,8 +39,8 @@ export function DashboardLayout({ onLogout, theme, onToggleTheme }: DashboardLay
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
-      case 'bins':
-        return <BinManagement />;
+      // case 'bins':
+      //   return <BinManagement />;
       case 'scheduling':
         return <Scheduling />;
       case 'alerts':
