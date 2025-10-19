@@ -39,5 +39,6 @@ export function useBins(pollInterval = 3000) {
     return () => clearInterval(interval);
   }, [pollInterval]);
 
-  return bins;
+  // Return both bins and setBins so the consumer can modify the bins (e.g., delete)
+  return { bins, setBins };
 }

@@ -46,5 +46,17 @@ app.get('/api/get-commands/:binId', (req, res) => {
   res.json(cmds);
 });
 
+// 🔹 Delete a bin
+app.delete('/api/bins/:binId', (req, res) => {
+  const binId = req.params.binId;
+  const index = bins.findIndex(b => b.binId === binId);
+  if (index >= 0) {
+    bins.splice(index, 1);
+    return res.json({ message: `Bin ${binId} deleted` });
+  }
+  res.status(404).json({ message: 'Bin not found' });
+});
+
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));

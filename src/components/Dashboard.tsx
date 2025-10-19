@@ -6,11 +6,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from './ui/button';
 import { Trash2, MoreVertical, Activity, AlertTriangle, TrendingUp, TrendingDown, Send, Battery, Wifi, WifiOff } from 'lucide-react';
 import { useBins } from '../../useBins';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Bin } from '../types/bin';
 import { differenceInHours, differenceInDays, parseISO } from 'date-fns';
 
 export function Dashboard() {
-  const bins = useBins(); // live bins from backend
+  const { bins, setBins } = useBins(); // live bins from backend
   const [selectedBin, setSelectedBin] = useState<Bin | null>(null);
   const [isCommandDialogOpen, setIsCommandDialogOpen] = useState(false);
 
@@ -21,9 +22,24 @@ export function Dashboard() {
   const lowBattery = bins.filter(b => b.battery > 0 && b.battery < 30).length;
   const alerts = bins.filter(b => b.alerts !== null && b.alerts !== '').length;
 
+ const handleDeleteBin = async (binId: string) => {
+  try {
+    await fetch(`http://172.26.59.116:3000/api/bins/${binId}`, {
+      method: 'DELETE',
+    });
+
+    // Update UI optimistically
+      setBins(prev => prev.filter(b => b.binId !== binId));
+    } catch (err) {
+      console.error('Failed to delete bin:', err);
+    }
+  };
+
+
+
   const handleEmptyCommand = async (bin: Bin) => {
     try {
-      await fetch('http://localhost:3000/api/send-command', {
+      await fetch('http://172.26.59.116:3000/api/send-command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ binId: bin.binId, command: 'empty_now' }),
@@ -33,6 +49,8 @@ export function Dashboard() {
       console.error('Error sending command:', err);
     }
   };
+
+  
 
   const getLastEmptyText = (timestamp: string) => {
     const date = parseISO(timestamp);
@@ -102,60 +120,119 @@ export function Dashboard() {
             <CardTitle>Bin Status Overview</CardTitle>
             <CardDescription>Current status of all smart bins</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {bins.map((bin) => (
-              <div key={bin.binId} className="flex items-center justify-between p-3 border rounded-lg">
-                {/* Bin Info */}
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
-                    {bin.battery > 0 ? (
-                      <Wifi className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <WifiOff className="h-4 w-4 text-red-500" />
-                    )}
-                    <span className="font-medium">{bin.binId}</span>
-                  </div>
-                </div>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableCell>Bin ID</TableCell>
+                  <TableCell>Fill Level</TableCell>
+                  <TableCell>Battery</TableCell>
+                  <TableCell>Signal</TableCell>
+                  <TableCell>Temperature</TableCell>
+                  <TableCell>Humidity</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {bins.map((bin) => (
+                  <TableRow key={bin.binId}>
+                    {/* Bin ID with signal */}
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        {bin.battery > 0 ? (
+                          <Wifi className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <WifiOff className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className="font-medium">{bin.binId}</span>
+                      </div>
+                    </TableCell>
 
-                {/* Bin Stats */}
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{bin.fill_level.toFixed(1)}% full</div>
-                    <Progress value={bin.fill_level} className="w-20 h-2" />
-                  </div>
+                    {/* Fill Level */}
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Progress value={bin.fill_level} className="w-16 h-2" />
+                        <span className="text-sm">{bin.fill_level.toFixed(1)}%</span>
+                      </div>
+                    </TableCell>
 
-                  <div className="text-right">
-                    <div className="text-sm font-medium flex items-center">
-                      <Battery className="h-3 w-3 mr-1" />
-                      {bin.battery}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">{getLastEmptyText(bin.timestamp)}</div>
-                  </div>
+                    {/* Battery */}
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Battery className="h-4 w-4" />
+                        <span>{bin.battery}%</span>
+                      </div>
+                    </TableCell>
 
-                  <Badge variant={bin.fill_level > 80 ? 'destructive' : bin.battery < 30 ? 'secondary' : 'default'}>
-                    {bin.fill_level > 80 ? 'Full' : bin.battery < 30 ? 'Low Battery' : 'Normal'}
-                  </Badge>
+                    {/* Signal Strength */}
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Wifi className="h-4 w-4" />
+                        <span>{bin.signal_strength} dBm</span>
+                      </div>
+                    </TableCell>
 
-                  {/* Dropdown Menu */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleEmptyCommand(bin)}>
-                        <Send className="h-4 w-4 mr-2" /> Empty Now
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            ))}
-          </CardContent>
+                    {/* Temperature */}
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        🌡️
+                        <span>{bin.temperature.toFixed(1)}°C</span>
+                      </div>
+                    </TableCell>
+
+                    {/* Humidity */}
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        💧
+                        <span>{bin.humidity.toFixed(1)}%</span>
+                      </div>
+                    </TableCell>
+
+                    {/* Status Badge */}
+                    <TableCell>
+                      <Badge
+                        variant={
+                          bin.fill_level > 80
+                            ? 'destructive'
+                            : bin.battery < 30
+                            ? 'secondary'
+                            : 'default'
+                        }
+                      >
+                        {bin.fill_level > 80
+                          ? 'Full'
+                          : bin.battery < 30
+                          ? 'Low Battery'
+                          : 'Normal'}
+                      </Badge>
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => handleEmptyCommand(bin)}>
+                            <Send className="h-4 w-4 mr-2" /> Empty Now
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => handleDeleteBin(bin.binId)}>
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>   
         </Card>
       </div>
     </div>
