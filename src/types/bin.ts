@@ -9,6 +9,6 @@ export interface Bin {
   is_master: boolean;
   master_id: string | null;
   cluster_id: string;
-  recentActivity : string | null;
-  alerts : string | null;
+  recentActivity: string | null;
+  alerts: string | null;
 }
